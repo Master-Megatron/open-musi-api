@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 const ClientError = require('../../exceptions/ClientError');
 
 class CollaborationsHandler {
@@ -5,6 +6,7 @@ class CollaborationsHandler {
     this._collaborationsService = collaborationsService;
     this._playlistsService = playlistService;
     this._validator = validator;
+
     this.postCollaborationHandler = this.postCollaborationHandler.bind(this);
     this.deleteCollaborationHandler = this.deleteCollaborationHandler.bind(this);
   }
@@ -17,11 +19,9 @@ class CollaborationsHandler {
       const { playlistId, userId } = request.payload;
 
       await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+      await this._playlistsService.getUserById(userId);
 
-      const collaborationId = await this._collaborationsService.addCollaboration(
-        playlistId,
-        userId,
-      );
+      const collaborationId = await this._collaborationsService.addCollaboration(playlistId, userId);
       const response = h.response({
         status: 'success',
         message: 'Kolaborasi berhasil ditambahkan',
@@ -58,6 +58,7 @@ class CollaborationsHandler {
       const { playlistId, userId } = request.payload;
 
       await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+      await this._playlistsService.getUserById(userId);
       await this._collaborationsService.deleteCollaboration(
         playlistId,
         userId,

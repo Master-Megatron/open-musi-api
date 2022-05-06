@@ -28,8 +28,7 @@ class PlaylistsService {
       text: `SELECT playlists.id, playlists.name, users.username FROM playlists 
                     LEFT JOIN users ON users.id = playlists.owner
                     LEFT JOIN collaborations ON collaborations.playlist_id = playlists.id 
-                    WHERE playlists.owner = $1 OR collaborations.user_id = $1
-                    GROUP BY playlists.id, users.username`,
+                    WHERE playlists.owner = $1 OR collaborations.user_id = $1`,
       values: [owner],
     });
     return result.rows;
@@ -63,14 +62,35 @@ class PlaylistsService {
       text: 'SELECT * FROM playlists WHERE id = $1',
       values: [id],
     };
+    // const query2 = {
+    //   text: 'SELECT id FROM users WHERE id = $1',
+    //   values: [owner],
+    // };
+    // const result2 = await this._pool.query(query2);
     const result = await this._pool.query(query);
     if (!result.rows.length) {
       throw new NotFoundError('Playlists tidak ditemukan');
     }
+    // if (!result2.rows.length) {
+    //   throw new NotFoundError('Playlists tidak ditemukan');
+    // }
     const playlist = result.rows[0];
     if (playlist.owner !== owner) {
-      throw new AuthorizationError('Anda tidak berhak mengakses source ini');
+      throw new AuthorizationError('Tidak berhak mengakses source ini');
     }
+  }
+
+  async getUserById(userId) {
+    const query = {
+      text: 'SELECT * FROM users WHERE id = $1',
+      values: [userId],
+    };
+
+    const result = await this._pool.query(query);
+    if (!result.rows.length) {
+      throw new NotFoundError('User tidak ditemukan');
+    }
+    return result.rows[0];
   }
 
   async verifyPlaylistAccess(playlistId, userId) {

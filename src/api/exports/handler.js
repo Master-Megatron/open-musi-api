@@ -12,12 +12,11 @@ class ExportsHandler {
   async postExportPlaylistsHandler(request, h) {
     try {
       this._validator.validateExportSongsPayload(request.payload);
-      const { id } = request.params;
+      const { playlistId } = request.params;
       const { id: owner } = request.auth.credentials;
-      await this._playlistsService.verifyPlaylistAccess(id, owner);
-
+      await this._playlistsService.verifyPlaylistOwner(playlistId, owner);
       const message = {
-        id,
+        playlistId,
         targetEmail: request.payload.targetEmail,
       };
 
