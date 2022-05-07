@@ -68,7 +68,6 @@ class PlaylistsService {
     if (playlist.owner !== userId) {
       throw new AuthorizationError('Anda tidak berhak mengakses source ini');
     }
-    console.log(userId);
   }
 }
 
