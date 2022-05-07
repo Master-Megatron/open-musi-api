@@ -5,9 +5,8 @@ const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
 class PlaylistsService {
-  constructor(collaborationsService) {
+  constructor() {
     this._pool = new Pool();
-    this._collaborationsService = collaborationsService;
   }
 
   async addPlaylists(name, owner) {
@@ -26,9 +25,8 @@ class PlaylistsService {
   async getPlaylists(owner) {
     const result = await this._pool.query({
       text: `SELECT playlists.id, playlists.name, users.username FROM playlists 
-                    LEFT JOIN users ON users.id = playlists.owner
-                    LEFT JOIN collaborations ON collaborations.playlist_id = playlists.id 
-                    WHERE playlists.owner = $1 OR collaborations.user_id = $1`,
+                    LEFT JOIN users ON users.id = playlists.owner 
+                    WHERE playlists.owner = $1`,
       values: [owner],
     });
     return result.rows;
@@ -57,58 +55,20 @@ class PlaylistsService {
     }
   }
 
-  async verifyPlaylistOwner(id, owner) {
+  async verifyPlaylistOwner(playlistId, userId) {
     const query = {
       text: 'SELECT * FROM playlists WHERE id = $1',
-      values: [id],
+      values: [playlistId],
     };
-    // const query2 = {
-    //   text: 'SELECT id FROM users WHERE id = $1',
-    //   values: [owner],
-    // };
-    // const result2 = await this._pool.query(query2);
     const result = await this._pool.query(query);
     if (!result.rows.length) {
       throw new NotFoundError('Playlists tidak ditemukan');
     }
-    // if (!result2.rows.length) {
-    //   throw new NotFoundError('Playlists tidak ditemukan');
-    // }
     const playlist = result.rows[0];
-    if (playlist.owner !== owner) {
-      throw new AuthorizationError('Tidak berhak mengakses source ini');
+    if (playlist.owner !== userId) {
+      throw new AuthorizationError('Anda tidak berhak mengakses source ini');
     }
-  }
-
-  async getUserById(userId) {
-    const query = {
-      text: 'SELECT * FROM users WHERE id = $1',
-      values: [userId],
-    };
-
-    const result = await this._pool.query(query);
-    if (!result.rows.length) {
-      throw new NotFoundError('User tidak ditemukan');
-    }
-    return result.rows[0];
-  }
-
-  async verifyPlaylistAccess(playlistId, userId) {
-    try {
-      await this.verifyPlaylistOwner(playlistId, userId);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw error;
-      }
-      try {
-        await this._collaborationsService.verifyCollaborator(
-          playlistId,
-          userId,
-        );
-      } catch {
-        throw error;
-      }
-    }
+    console.log(userId);
   }
 }
 

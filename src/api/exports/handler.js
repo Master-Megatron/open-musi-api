@@ -1,30 +1,30 @@
 const ClientError = require('../../exceptions/ClientError');
 
 class ExportsHandler {
-  constructor(authenticationsService, usersService, tokenManager, validator) {
-    this._authenticationsService = authenticationsService;
-    this._usersService = usersService;
-    this._tokenManager = tokenManager;
+  constructor(service, validator, playlistService) {
+    this._service = service;
     this._validator = validator;
+    this._playlistsService = playlistService;
+
     this.postExportPlaylistsHandler = this.postExportPlaylistsHandler.bind(this);
   }
 
   async postExportPlaylistsHandler(request, h) {
     try {
-      this._validator.validateExportSongsPayload(request.payload);
+      this._validator.validateExportPlaylistsPayload(request.payload);
+      const userId = request.auth.credentials.id;
       const { playlistId } = request.params;
-      const { id: owner } = request.auth.credentials;
-      await this._playlistsService.verifyPlaylistOwner(playlistId, owner);
+      await this._playlistsService.verifyPlaylistOwner(playlistId, userId);
       const message = {
         playlistId,
         targetEmail: request.payload.targetEmail,
       };
 
-      await this._service.sendMessage('export:songs', JSON.stringify(message));
+      await this._service.sendMessage('export:playlists', JSON.stringify(message));
 
       const response = h.response({
         status: 'success',
-        message: 'Permintaan Anda dalam antrean',
+        message: 'Permintaan Anda sedang kami proses',
       });
       response.code(201);
       return response;
@@ -37,7 +37,6 @@ class ExportsHandler {
         response.code(error.statusCode);
         return response;
       }
-
       // Server ERROR!
       const response = h.response({
         status: 'error',
